@@ -8,6 +8,7 @@ import com.msr.utils.Md5Util;
 import com.msr.utils.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -82,6 +83,36 @@ public class UserController {
     @PatchMapping("/updateAvatar")
     public Result updateAvatar(@RequestParam String avatarUrl){
         userService.updateAvatar(avatarUrl);
+        return Result.success();
+    }
+    @PatchMapping("/updatePwd")
+    public Result updatePwd(@RequestBody Map<String,String> map){
+        //1.接受请求参数
+        String oldPwd = map.get("old_pwd");
+        String newPwd = map.get("new_pwd");
+        String rePwd = map.get("re_pwd");
+
+        //2.判断参数有没有传递
+        if (!StringUtils.hasLength(oldPwd)|| !StringUtils.hasLength(newPwd) ||!StringUtils.hasLength(rePwd)){
+                return Result.error("参数不能为空！");
+        }
+
+        //3.判断原始密码是否正确
+        Map<String,Object> claims = ThreadLocalUtil.get();
+        String username = (String) claims.get("username");
+        User user = userService.findByName(username);
+        if (!user.getPassword().equals(Md5Util.getMD5String(oldPwd))){
+            return Result.error("原始密码不正确！");
+        }
+
+        //4.判断两次密码是否一致
+        if (!newPwd.equals(rePwd)){
+            return Result.error("两次密码输入不一致！");
+        }
+
+        //5.修改密码
+        userService.updatePwd(newPwd);
+
         return Result.success();
     }
 }
