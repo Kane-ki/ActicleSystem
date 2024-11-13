@@ -9,10 +9,7 @@ import com.msr.utils.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -75,5 +72,10 @@ public class UserController {
         User user = userService.findByName(username);
         //3.返回响应数据
         return  Result.success(user);
+    }
+    @PutMapping("/update")
+    public Result update(@RequestBody @Validated User user){
+        userService.update(user);
+        return  Result.success();
     }
 }
