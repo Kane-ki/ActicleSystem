@@ -4,10 +4,12 @@ import com.msr.mapper.UserMapper;
 import com.msr.pojo.User;
 import com.msr.service.UserService;
 import com.msr.utils.Md5Util;
+import com.msr.utils.ThreadLocalUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * @author wjing
@@ -36,5 +38,12 @@ public class UserServiceImpl implements UserService {
         //设定修改时间
         user.setUpdateTime(LocalDateTime.now());
         userMapper.update(user);
+    }
+
+    @Override
+    public void updateAvatar(String avatarUrl) {
+        Map<String,Object> map = ThreadLocalUtil.get();
+        Integer id = Integer.parseInt(map.get("id").toString());
+        userMapper.updateAvatar(avatarUrl,id);
     }
 }
