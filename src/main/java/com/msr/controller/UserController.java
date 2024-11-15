@@ -8,12 +8,14 @@ import com.msr.utils.Md5Util;
 import com.msr.utils.ThreadLocalUtil;
 import jakarta.validation.constraints.Pattern;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author wjing
@@ -24,6 +26,10 @@ import java.util.Map;
 @RequestMapping("/user")
 @Validated
 public class UserController {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
     @Autowired
     private UserService userService;
     @PostMapping("/register")
@@ -59,6 +65,8 @@ public class UserController {
             claims.put("id",user.getId());
             claims.put("username",user.getUsername());
            String token = JwtUtil.genToken(claims);
+           //如果登陆成功，则需要把token在redis里面保存一份
+            redisTemplate.opsForValue().set(token,token,12, TimeUnit.HOURS);
             return Result.success(token);
         }
 
@@ -86,7 +94,7 @@ public class UserController {
         return Result.success();
     }
     @PatchMapping("/updatePwd")
-    public Result updatePwd(@RequestBody Map<String,String> map){
+    public Result updatePwd(@RequestBody Map<String,String> map,@RequestHeader("Authorization") String token){
         //1.接受请求参数
         String oldPwd = map.get("old_pwd");
         String newPwd = map.get("new_pwd");
@@ -112,7 +120,8 @@ public class UserController {
 
         //5.修改密码
         userService.updatePwd(newPwd);
-
+        //从redis中删除token
+        redisTemplate.opsForValue().getOperations().delete(token);
         return Result.success();
     }
 }
